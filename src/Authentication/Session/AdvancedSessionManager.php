@@ -318,6 +318,8 @@ class AdvancedSessionManager implements SessionSecurityInterface
             return true;
         }
 
+        $strictness = strtolower( $strictness );
+
         if ( 'none' === $strictness ) {
             return true;
         }
@@ -342,7 +344,9 @@ class AdvancedSessionManager implements SessionSecurityInterface
             return $sessionIp === $requestIp;
         }
 
-        return true;
+        // Unknown strictness: fail closed so a config typo can't silently
+        // disable IP binding.
+        return false;
     }
 
     /**
@@ -353,6 +357,8 @@ class AdvancedSessionManager implements SessionSecurityInterface
         if ( ! $sessionUa || ! $requestUa ) {
             return true;
         }
+
+        $strictness = strtolower( $strictness );
 
         if ( 'none' === $strictness ) {
             return true;
@@ -370,7 +376,8 @@ class AdvancedSessionManager implements SessionSecurityInterface
             return $sessionBrowser === $requestBrowser;
         }
 
-        return true;
+        // Unknown strictness: fail closed (same reasoning as validateIpBinding).
+        return false;
     }
 
     /**
