@@ -32,7 +32,7 @@ class AdvancedSessionManager implements SessionSecurityInterface
         $absoluteMinutes = config( 'artisanpack.security-auth.advanced_sessions.timeouts.absolute_minutes', 480 );
         $expiresAt       = now()->addMinutes( $absoluteMinutes );
 
-        return UserSession::create( [
+        $session = UserSession::create( [
             'id'               => $sessionId,
             'user_id'          => $user->getAuthIdentifier(),
             'device_id'        => $deviceId,
@@ -45,6 +45,12 @@ class AdvancedSessionManager implements SessionSecurityInterface
             'expires_at'       => $expiresAt,
             'created_at'       => now(),
         ] );
+
+        // Persist the new session id where getCurrentSession() looks for it,
+        // otherwise the DB row exists but the request can't find its own session.
+        session()->put( 'advanced_session_id', $session->id );
+
+        return $session;
     }
 
     /**
@@ -115,6 +121,9 @@ class AdvancedSessionManager implements SessionSecurityInterface
 
             // Delete the old session record
             UserSession::where( 'id', $oldId )->delete();
+
+            // Sync the session store so subsequent requests resolve the rotated row.
+            session()->put( 'advanced_session_id', $newSession->id );
 
             return $newSession;
         } );
@@ -248,7 +257,7 @@ class AdvancedSessionManager implements SessionSecurityInterface
             return false;
         }
 
-        return $session->last_activity_at->addMinutes( $warningMinutes )->isPast();
+        return $session->last_activity_at->copy()->addMinutes( $warningMinutes )->isPast();
     }
 
     /**
