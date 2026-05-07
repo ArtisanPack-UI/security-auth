@@ -1,0 +1,84 @@
+{
+  "name": "artisanpack-ui/security-auth",
+  "description": "Authentication security for Laravel — two-factor authentication (email/TOTP), password complexity and breach checking, account lockout, and session management.",
+  "type": "library",
+  "license": "GPL-3.0-or-later",
+  "version": "0.1.0",
+  "keywords": [
+    "laravel",
+    "security",
+    "authentication",
+    "two-factor",
+    "2fa",
+    "password",
+    "session",
+    "lockout"
+  ],
+  "autoload": {
+    "psr-4": {
+      "ArtisanPackUI\\SecurityAuth\\": "src/"
+    },
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Jacob Martella",
+      "email": "me@jacobmartella.com"
+    }
+  ],
+  "require": {
+    "php": "^8.2",
+    "illuminate/support": "^10.0|^11.0|^12.0",
+    "artisanpack-ui/core": "^1.0",
+    "pragmarx/google2fa-laravel": "^2.3"
+  },
+  "require-dev": {
+    "artisanpack-ui/code-style": "^1.1",
+    "artisanpack-ui/code-style-pint": "^1.1",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "friendsofphp/php-cs-fixer": "^3.75",
+    "laravel/pint": "^1.26",
+    "livewire/livewire": "^3.6|^4.0",
+    "orchestra/testbench": "^10.2",
+    "pestphp/pest": "^3.8",
+    "pestphp/pest-plugin-laravel": "^3.2"
+  },
+  "scripts": {
+    "lint": [
+      "./vendor/bin/php-cs-fixer fix --dry-run --diff",
+      "./vendor/bin/phpcs"
+    ],
+    "fix": "./vendor/bin/php-cs-fixer fix",
+    "cs": "./vendor/bin/phpcs",
+    "cs:fix": "./vendor/bin/phpcbf",
+    "test": "./vendor/bin/pest"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "platform": {
+      "php": "8.2"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "ArtisanPackUI\\SecurityAuth\\SecurityAuthServiceProvider"
+      ],
+      "aliases": {
+        "TwoFactor": "ArtisanPackUI\\SecurityAuth\\Facades\\TwoFactor"
+      }
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
