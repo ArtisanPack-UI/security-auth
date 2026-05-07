@@ -36,12 +36,30 @@ class HaveIBeenPwnedService implements BreachCheckerInterface
         $prefix = substr( $sha1, 0, 5 );
         $suffix = substr( $sha1, 5 );
 
-        // Check cache first
+        // Cache::remember() reruns the loader whenever the stored value is null,
+        // so an API outage would leave every password check waiting on a fresh
+        // 5-second HTTP timeout. Read-then-write so we only cache successes,
+        // and fail-cache outages briefly to avoid hammering a degraded API.
         if ( config( 'artisanpack.security-auth.passwordSecurity.breachChecking.cacheResults', true ) ) {
-            $cacheKey = "hibp_prefix_{$prefix}";
-            $ttl      = config( 'artisanpack.security-auth.passwordSecurity.breachChecking.cacheTtl', 86400 );
+            $cacheKey     = "hibp_prefix_{$prefix}";
+            $failCacheKey = "hibp_fail_{$prefix}";
+            $ttl          = config( 'artisanpack.security-auth.passwordSecurity.breachChecking.cacheTtl', 86400 );
 
-            $results = Cache::remember( $cacheKey, $ttl, fn () => $this->fetchFromApi( $prefix ) );
+            if ( Cache::has( $failCacheKey ) ) {
+                return 0;
+            }
+
+            $results = Cache::get( $cacheKey );
+
+            if ( null === $results ) {
+                $results = $this->fetchFromApi( $prefix );
+
+                if ( null === $results ) {
+                    Cache::put( $failCacheKey, true, 60 );
+                } else {
+                    Cache::put( $cacheKey, $results, $ttl );
+                }
+            }
         } else {
             $results = $this->fetchFromApi( $prefix );
         }
@@ -110,7 +128,7 @@ class HaveIBeenPwnedService implements BreachCheckerInterface
             Log::error( 'HIBP API request failed', [
                 'error'  => $e->getMessage(),
                 'prefix' => $prefix,
-            ]);
+            ] );
 
             return null;
         }

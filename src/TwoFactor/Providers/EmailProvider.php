@@ -60,7 +60,7 @@ class EmailProvider implements TwoFactorProvider
 
 		RateLimiter::hit( $key, 900 ); // Lock for 15 minutes (900 seconds)
 
-		$code = random_int( 100000, 999999 );
+		$code = (string) random_int( 100000, 999999 );
 
 		// 3. Handle Mail Failures
 		try {

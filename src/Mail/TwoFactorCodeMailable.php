@@ -34,18 +34,18 @@ class TwoFactorCodeMailable extends Mailable
 	 *
 	 * @since 1.2.0
 	 *
-	 * @var int
+	 * @var string
 	 */
-	protected int $code;
+	protected string $code;
 
 	/**
 	 * Create a new message instance.
 	 *
 	 * @since 1.2.0
 	 *
-	 * @param int $code The 2FA code.
+	 * @param string $code The 2FA code (kept as a string so leading zeros survive).
 	 */
-	public function __construct( int $code )
+	public function __construct( string $code )
 	{
 		$this->code = $code;
 	}

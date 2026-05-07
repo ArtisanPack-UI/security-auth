@@ -50,15 +50,18 @@ class TwoFactorMiddleware
 	 */
 	public function handle( Request $request, Closure $next ): mixed
 	{
-		$user = $request->user();
+		$user            = $request->user();
+		$verifyRouteName = config( 'artisanpack.security-auth.routes.verify' );
 
 		if (
 			$user &&
 			method_exists( $user, 'hasTwoFactorEnabled' ) &&
 			$user->hasTwoFactorEnabled() &&
-			! $request->session()->get( self::SESSION_KEY )
+			! $request->session()->get( self::SESSION_KEY ) &&
+			$verifyRouteName &&
+			! $request->routeIs( $verifyRouteName )
 		) {
-			return redirect()->route( config( 'artisanpack.security-auth.routes.verify' ) );
+			return redirect()->route( $verifyRouteName );
 		}
 
 		return $next( $request );
