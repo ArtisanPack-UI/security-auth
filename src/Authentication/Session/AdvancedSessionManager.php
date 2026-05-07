@@ -361,6 +361,11 @@ class AdvancedSessionManager implements SessionSecurityInterface
      */
     protected function extractBrowser( string $userAgent ): ?string
     {
+        // Edge UAs include "Chrome/" too, so this needs to win before the
+        // Chrome branch.
+        if ( preg_match( '/Edg\/\d+/i', $userAgent ) ) {
+            return 'Edge';
+        }
         if ( preg_match( '/Chrome\/\d+/i', $userAgent ) ) {
             return 'Chrome';
         }
@@ -369,9 +374,6 @@ class AdvancedSessionManager implements SessionSecurityInterface
         }
         if ( preg_match( '/Safari\/\d+/i', $userAgent ) && ! str_contains( $userAgent, 'Chrome' ) ) {
             return 'Safari';
-        }
-        if ( preg_match( '/Edg\/\d+/i', $userAgent)) {
-            return 'Edge';
         }
 
         return null;

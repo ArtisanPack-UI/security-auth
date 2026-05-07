@@ -97,11 +97,24 @@ class UserSession extends Model
     /**
      * Get the device associated with this session.
      *
-     * @return BelongsTo<UserDevice, UserSession>
+     * UserDevice lives in artisanpack-ui/security-advanced-auth, which is
+     * an optional sibling package. Resolve the class lazily via FQCN string
+     * so the relation is a no-op (returns nothing) when that package isn't
+     * installed instead of throwing a ClassNotFoundException at boot.
+     *
+     * @return BelongsTo<Model, UserSession>
      */
     public function device(): BelongsTo
     {
-        return $this->belongsTo( UserDevice::class, 'device_id' );
+        $deviceModel = '\\ArtisanPackUI\\SecurityAdvancedAuth\\Models\\UserDevice';
+
+        if ( ! class_exists( $deviceModel ) ) {
+            // Fall back to a self-referential nullable relation: device_id
+            // is nullable, so the query returns no rows in this configuration.
+            return $this->belongsTo( static::class, 'device_id' );
+        }
+
+        return $this->belongsTo( $deviceModel, 'device_id' );
     }
 
     /**

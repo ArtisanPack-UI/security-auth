@@ -37,6 +37,7 @@ return new class extends Migration
             $table->boolean('is_current')->default(false);
             $table->timestamp('last_activity_at')->nullable();
             $table->timestamp('expires_at')->nullable();
+            $table->timestamp('terminated_at')->nullable();
             $table->timestamp('created_at')->nullable();
 
             $table->index('user_id', 'idx_user_sessions');

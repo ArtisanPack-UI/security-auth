@@ -38,7 +38,14 @@ class PasswordComplexity implements Rule
     public function passes( $attribute, $value ): bool
     {
         $this->errors = [];
-        $config       = config( 'artisanpack.security-auth.passwordSecurity.complexity', [] );
+
+        if ( ! is_string( $value ) ) {
+            $this->errors[] = 'Password must be a string.';
+
+            return false;
+        }
+
+        $config = config( 'artisanpack.security-auth.passwordSecurity.complexity', [] );
 
         // Length checks
         $minLength = $config['minLength'] ?? 8;

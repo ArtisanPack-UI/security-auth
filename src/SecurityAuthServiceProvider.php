@@ -9,6 +9,7 @@ use ArtisanPackUI\SecurityAuth\Authentication\Contracts\SessionSecurityInterface
 use ArtisanPackUI\SecurityAuth\Authentication\Lockout\AccountLockoutManager;
 use ArtisanPackUI\SecurityAuth\Authentication\Session\AdvancedSessionManager;
 use ArtisanPackUI\SecurityAuth\Console\Commands\ManageAccountLockout;
+use ArtisanPackUI\SecurityAuth\Contracts\BreachCheckerInterface;
 use ArtisanPackUI\SecurityAuth\Contracts\PasswordSecurityServiceInterface;
 use ArtisanPackUI\SecurityAuth\Http\Middleware\CheckAccountLockout;
 use ArtisanPackUI\SecurityAuth\Http\Middleware\EnforcePasswordPolicy;
@@ -81,9 +82,13 @@ class SecurityAuthServiceProvider extends ServiceProvider
             return new HaveIBeenPwnedService();
         } );
 
+        // Bind the contract so NotCompromised + PasswordPolicy can resolve
+        // the same instance that PasswordSecurityService uses.
+        $this->app->bind( BreachCheckerInterface::class, HaveIBeenPwnedService::class );
+
         $this->app->singleton( PasswordSecurityServiceInterface::class, function ( $app ) {
             return new PasswordSecurityService(
-                $app->make( HaveIBeenPwnedService::class ),
+                $app->make( BreachCheckerInterface::class ),
             );
         } );
     }

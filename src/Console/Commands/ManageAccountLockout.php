@@ -92,11 +92,16 @@ class ManageAccountLockout extends Command
         $lockoutManager = App::make( AccountLockoutManager::class );
 
         if ( $this->option( 'all' ) ) {
-            $count = AccountLockout::active()->update( [
-                'is_active'   => false,
-                'unlocked_at' => now(),
-                'unlocked_by' => 'console',
-            ] );
+            // is_active is computed (see AccountLockout::isActive()) and not
+            // a real column; unlocked_by expects an int FK, not a string.
+            // Iterate so the model's unlock() contract is preserved.
+            $count = 0;
+
+            AccountLockout::active()->each( function ( AccountLockout $lockout ) use ( &$count ): void {
+                $lockout->unlock( null, 'Unlocked via console command' );
+                $count++;
+            } );
+
             $this->info( "Unlocked {$count} account(s)." );
 
             return self::SUCCESS;
