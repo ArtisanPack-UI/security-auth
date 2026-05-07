@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class AdvancedSessionManager implements SessionSecurityInterface
 {
@@ -100,33 +101,40 @@ class AdvancedSessionManager implements SessionSecurityInterface
      */
     public function rotateSession( UserSession $session ): UserSession
     {
-        return DB::transaction( function () use ( $session ) {
-            $oldId = $session->id;
+        $newSession = DB::transaction( function () use ( $session ) {
+            // SELECT ... FOR UPDATE so two parallel rotations of the same row
+            // serialize instead of inserting duplicate replacement rows. Read
+            // attributes from the locked instance (not the stale caller copy).
+            $locked = UserSession::query()->lockForUpdate()->find( $session->id );
 
-            // Create new session with fresh ID, copying all relevant attributes
+            if ( null === $locked ) {
+                throw new RuntimeException( 'Session has already been rotated or terminated.' );
+            }
+
             $newSession = UserSession::create( [
                 'id'               => Str::random( 64 ),
-                'user_id'          => $session->user_id,
-                'device_id'        => $session->device_id,
-                'ip_address'       => $session->ip_address,
-                'user_agent'       => $session->user_agent,
-                'location'         => $session->location,
-                'payload'          => $session->payload,
-                'auth_method'      => $session->auth_method,
-                'is_current'       => $session->is_current,
+                'user_id'          => $locked->user_id,
+                'device_id'        => $locked->device_id,
+                'ip_address'       => $locked->ip_address,
+                'user_agent'       => $locked->user_agent,
+                'location'         => $locked->location,
+                'payload'          => $locked->payload,
+                'auth_method'      => $locked->auth_method,
+                'is_current'       => $locked->is_current,
                 'last_activity_at' => now(),
-                'expires_at'       => $session->expires_at,
+                'expires_at'       => $locked->expires_at,
                 'created_at'       => now(),
             ] );
 
-            // Delete the old session record
-            UserSession::where( 'id', $oldId )->delete();
-
-            // Sync the session store so subsequent requests resolve the rotated row.
-            session()->put( 'advanced_session_id', $newSession->id );
+            UserSession::where( 'id', $locked->id )->delete();
 
             return $newSession;
         } );
+
+        // Session-store writes belong outside the DB transaction.
+        session()->put( 'advanced_session_id', $newSession->id );
+
+        return $newSession;
     }
 
     /**
