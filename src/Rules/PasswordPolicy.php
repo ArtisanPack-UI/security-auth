@@ -1,5 +1,7 @@
 <?php
 
+declare( strict_types=1 );
+
 namespace ArtisanPackUI\SecurityAuth\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
@@ -11,19 +13,16 @@ class PasswordPolicy implements Rule
     /**
      * The validation errors.
      *
-     * @var array
+     * @var array<int, string>
      */
-    protected $errors = [];
+    protected array $errors = [];
 
     /**
      * Determine if the validation rule passes.
      *
      * @param  string  $attribute
-     * @param  mixed  $value
-     *
-     * @return bool
      */
-    public function passes( $attribute, $value )
+    public function passes( $attribute, mixed $value ): bool
     {
         $validator = Validator::make( ['password' => $value], [
             'password' => [
@@ -32,13 +31,17 @@ class PasswordPolicy implements Rule
                     ->letters()
                     ->mixedCase()
                     ->numbers()
-                    ->symbols()
-                    ->uncompromised(),
+                    ->symbols(),
+                // Delegate breach checking to the package's NotCompromised rule
+                // so config flags + outage protection in HaveIBeenPwnedService
+                // are honored (vs. Password::uncompromised() which bypasses them).
+                new NotCompromised(),
             ],
         ] );
 
         if ( $validator->fails() ) {
             $this->errors = $validator->errors()->all();
+
             return false;
         }
 
@@ -48,9 +51,9 @@ class PasswordPolicy implements Rule
     /**
      * Get the validation error message.
      *
-     * @return array
+     * @return array<int, string>
      */
-    public function message()
+    public function message(): array
     {
         return $this->errors;
     }

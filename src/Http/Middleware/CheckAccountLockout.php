@@ -9,6 +9,7 @@ use ArtisanPackUI\SecurityAuth\Models\AccountLockout;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckAccountLockout
@@ -103,7 +104,10 @@ class CheckAccountLockout
             ], 423 );
         }
 
-        return redirect()->route( 'login')
-            ->with( 'error', $message);
+        $redirect = Route::has( 'login' )
+            ? redirect()->route( 'login' )
+            : redirect()->to( url( '/' ) );
+
+        return $redirect->with( 'error', $message );
     }
 }

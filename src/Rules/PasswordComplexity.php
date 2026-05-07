@@ -44,11 +44,12 @@ class PasswordComplexity implements Rule
         $minLength = $config['minLength'] ?? 8;
         $maxLength = $config['maxLength'] ?? 128;
 
-        if ( strlen( $value ) < $minLength ) {
+        // Use mb_strlen so multi-byte characters count as one character apiece.
+        if ( mb_strlen( $value, 'UTF-8' ) < $minLength ) {
             $this->errors[] = "Password must be at least {$minLength} characters.";
         }
 
-        if ( strlen( $value ) > $maxLength ) {
+        if ( mb_strlen( $value, 'UTF-8' ) > $maxLength ) {
             $this->errors[] = "Password must not exceed {$maxLength} characters.";
         }
 
@@ -71,7 +72,8 @@ class PasswordComplexity implements Rule
 
         // Unique characters
         $minUnique = $config['minUniqueCharacters'] ?? 4;
-        if ( count( array_unique( str_split( $value ) ) ) < $minUnique ) {
+        $chars     = preg_split( '//u', $value, -1, PREG_SPLIT_NO_EMPTY ) ?: [];
+        if ( count( array_unique( $chars ) ) < $minUnique ) {
             $this->errors[] = "Password must contain at least {$minUnique} unique characters.";
         }
 
@@ -119,10 +121,10 @@ class PasswordComplexity implements Rule
             'zxcvbnm',
         ];
 
-        $lowerValue = strtolower( $value );
+        $lowerValue = mb_strtolower( $value, 'UTF-8' );
 
         foreach ( $sequences as $sequence ) {
-            $sequence  = strtolower( $sequence );
+            $sequence  = mb_strtolower( $sequence, 'UTF-8' );
             $chunkSize = $maxSequential + 1;
             for ( $i = 0; $i <= strlen( $sequence ) - $chunkSize; $i++ ) {
                 $chunk = substr( $sequence, $i, $chunkSize );
@@ -162,7 +164,7 @@ class PasswordComplexity implements Rule
                         }
                     }
 
-                    if ( str_contains( $lowerValue, $attrValue)) {
+                    if ( str_contains( $lowerValue, $attrValue ) ) {
                         $this->errors[] = "Password must not contain your {$attr}.";
                     }
                 }

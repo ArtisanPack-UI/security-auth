@@ -110,7 +110,7 @@ class AdvancedSessionManager implements SessionSecurityInterface
                 'is_current'       => $session->is_current,
                 'last_activity_at' => now(),
                 'expires_at'       => $session->expires_at,
-                'created_at'       => $session->created_at,
+                'created_at'       => now(),
             ] );
 
             // Delete the old session record
@@ -274,7 +274,7 @@ class AdvancedSessionManager implements SessionSecurityInterface
             return false;
         }
 
-        return $session->created_at->addMinutes( $intervalMinutes )->isPast();
+        return $session->created_at->copy()->addMinutes( $intervalMinutes )->isPast();
     }
 
     /**
@@ -364,10 +364,10 @@ class AdvancedSessionManager implements SessionSecurityInterface
         if ( preg_match( '/Chrome\/\d+/i', $userAgent ) ) {
             return 'Chrome';
         }
-        if ( preg_match( '/Firefox\/\d+/i', $userAgent)) {
+        if ( preg_match( '/Firefox\/\d+/i', $userAgent ) ) {
             return 'Firefox';
         }
-        if ( preg_match( '/Safari\/\d+/i', $userAgent) && ! str_contains( $userAgent, 'Chrome')) {
+        if ( preg_match( '/Safari\/\d+/i', $userAgent ) && ! str_contains( $userAgent, 'Chrome' ) ) {
             return 'Safari';
         }
         if ( preg_match( '/Edg\/\d+/i', $userAgent)) {

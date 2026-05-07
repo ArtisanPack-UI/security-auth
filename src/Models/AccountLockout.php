@@ -173,13 +173,13 @@ class AccountLockout extends Model
      */
     public function scopeActive( $query )
     {
+        // Mirror isActive(): a lockout is active when it hasn't been manually
+        // unlocked AND (it's permanent OR has no expiry OR expires in the future).
         return $query->whereNull( 'unlocked_at' )
             ->where( function ( $q ): void {
                 $q->where( 'lockout_type', self::TYPE_PERMANENT )
-                    ->orWhere( function ( $qq ): void {
-                        $qq->where( 'lockout_type', '!=', self::TYPE_PERMANENT )
-                            ->where( 'expires_at', '>', now() );
-                    } );
+                    ->orWhereNull( 'expires_at' )
+                    ->orWhere( 'expires_at', '>', now() );
             } );
     }
 

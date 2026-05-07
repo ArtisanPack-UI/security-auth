@@ -70,7 +70,7 @@ class AccountLockoutStatus extends Component
 
     public function render()
     {
-        return view( 'security::livewire.account-lockout-status', [
+        return view( 'security-auth::livewire.account-lockout-status', [
             'lockoutHistory' => $this->lockoutHistory,
         ] );
     }

@@ -13,10 +13,22 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('user_sessions')) {
+            return;
+        }
+
         Schema::create('user_sessions', function (Blueprint $table) {
             $table->string('id', 255)->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('device_id')->nullable()->constrained('user_devices')->nullOnDelete();
+            // user_id is constrained against the host app's users table when present;
+            // skip the FK if `users` doesn't exist yet (e.g. testbench :memory: setup).
+            if (Schema::hasTable('users')) {
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            } else {
+                $table->unsignedBigInteger('user_id');
+            }
+            // device_id stays nullable + un-constrained here; user_devices lives in
+            // security-advanced-auth and is only present when that package is installed.
+            $table->unsignedBigInteger('device_id')->nullable();
             $table->string('ip_address', 45);
             $table->text('user_agent')->nullable();
             $table->json('location')->nullable();

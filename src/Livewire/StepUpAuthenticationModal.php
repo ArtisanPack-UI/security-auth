@@ -34,7 +34,7 @@ class StepUpAuthenticationModal extends Component
     #[On( 'step-up-required' )]
     public function openModal( ?string $redirectUrl = null ): void
     {
-        $this->redirectUrl = $redirectUrl ?? session( 'step_up_intended_url' );
+        $this->redirectUrl = $this->safeRedirect( $redirectUrl ?? session( 'step_up_intended_url' ) );
         $this->loadAvailableMethods();
         $this->reset( ['password', 'code', 'error'] );
         $this->show = true;
@@ -132,15 +132,20 @@ class StepUpAuthenticationModal extends Component
     #[On( 'webauthn-step-up-complete' )]
     public function verifyWebAuthn( array $response ): void
     {
-        // WebAuthn verification handled by the event
-        $this->completeStepUp();
+        // Server-side WebAuthn assertion verification lives in
+        // artisanpack-ui/security-advanced-auth. Until an app wires its own
+        // verifier into this dispatch, refuse to complete the step-up so a
+        // crafted Livewire event can't satisfy the gate by itself.
+        $this->error = 'WebAuthn verification is not wired up on this server.';
     }
 
     #[On( 'biometric-step-up-complete' )]
     public function verifyBiometric( array $response ): void
     {
-        // Biometric verification handled by the event
-        $this->completeStepUp();
+        // Same reasoning as verifyWebAuthn — biometric verification belongs
+        // to security-advanced-auth and must be performed server-side before
+        // the step-up gate is released.
+        $this->error = 'Biometric verification is not wired up on this server.';
     }
 
     public function getMethodLabel( string $method ): string
@@ -167,7 +172,7 @@ class StepUpAuthenticationModal extends Component
 
     public function render()
     {
-        return view( 'security::livewire.step-up-authentication-modal' );
+        return view( 'security-auth::livewire.step-up-authentication-modal' );
     }
 
     protected function completeStepUp(): void
@@ -177,9 +182,33 @@ class StepUpAuthenticationModal extends Component
         $this->show = false;
 
         if ( $this->redirectUrl ) {
-            $this->redirect( $this->redirectUrl);
+            $this->redirect( $this->redirectUrl );
         } else {
-            $this->dispatch( 'step-up-complete');
+            $this->dispatch( 'step-up-complete' );
         }
+    }
+
+    /**
+     * Whitelist redirect targets to internal paths or same-host URLs to avoid
+     * an open-redirect via the Livewire event payload.
+     */
+    protected function safeRedirect( ?string $url ): ?string
+    {
+        if ( null === $url || '' === $url ) {
+            return null;
+        }
+
+        if ( str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' ) ) {
+            return $url;
+        }
+
+        $parsed = parse_url( $url );
+        $appUrl = parse_url( (string) config( 'app.url' ) );
+
+        if ( ! $parsed || empty( $parsed['host'] ) || empty( $appUrl['host'] ?? null ) ) {
+            return null;
+        }
+
+        return $parsed['host'] === $appUrl['host'] ? $url : null;
     }
 }

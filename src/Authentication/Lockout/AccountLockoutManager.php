@@ -91,16 +91,28 @@ class AccountLockoutManager implements AccountLockoutInterface
         // Now atomically increment
         $attempts = Cache::increment( $cacheKey );
 
-        // Handle drivers that don't support increment
+        // Handle drivers that don't support increment — read, +1, write.
         if ( false === $attempts ) {
-            $attempts = 1;
-            Cache::put( $cacheKey, 1, now()->addSeconds( $ttlSeconds ) );
+            $attempts = (int) Cache::get( $cacheKey, 0 ) + 1;
+            Cache::put( $cacheKey, $attempts, now()->addSeconds( $ttlSeconds ) );
         }
 
         $attemptsRemaining = max( 0, $threshold - $attempts );
 
         // Check if we should lock
         if ( $attempts >= $threshold ) {
+            // Reuse an existing active lockout if one is already in flight so
+            // concurrent requests don't insert duplicates and re-fire AccountLocked.
+            $existing = $this->getActiveLockoutForSubject( $user, $ipAddress );
+
+            if ( null !== $existing ) {
+                return [
+                    'locked'             => true,
+                    'lockout'            => $existing,
+                    'attempts_remaining' => 0,
+                ];
+            }
+
             $lockout = $this->createLockout( $trigger, $user, $ipAddress, $attempts );
 
             return [
@@ -304,15 +316,36 @@ class AccountLockoutManager implements AccountLockoutInterface
     {
         $config = config( 'artisanpack.security-auth.account_lockout.whitelist', [] );
 
-        if ( $ipAddress && in_array( $ipAddress, $config['ips'] ?? [] ) ) {
+        $ips   = array_map( 'strval', (array) ( $config['ips'] ?? [] ) );
+        $users = array_map( 'strval', (array) ( $config['users'] ?? [] ) );
+
+        if ( $ipAddress && in_array( (string) $ipAddress, $ips, true ) ) {
             return true;
         }
 
-        if ( $user && in_array( $user->getAuthIdentifier(), $config['users'] ?? [] ) ) {
+        if ( $user && in_array( (string) $user->getAuthIdentifier(), $users, true ) ) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Find a still-active lockout for the given user or IP, if one exists.
+     */
+    protected function getActiveLockoutForSubject( ?Authenticatable $user, ?string $ipAddress ): ?AccountLockout
+    {
+        $query = AccountLockout::active();
+
+        if ( $user ) {
+            return $query->where( 'user_id', $user->getAuthIdentifier() )->first();
+        }
+
+        if ( $ipAddress ) {
+            return $query->where( 'ip_address', $ipAddress )->first();
+        }
+
+        return null;
     }
 
     /**
@@ -380,17 +413,17 @@ class AccountLockoutManager implements AccountLockoutInterface
             return 0;
         }
 
-        return AccountLockout::where( 'user_id', $user->getAuthIdentifier())
-            ->where( 'created_at', '>=', now()->subHours( 24))
+        return AccountLockout::where( 'user_id', $user->getAuthIdentifier() )
+            ->where( 'created_at', '>=', now()->subHours( 24 ) )
             ->count();
     }
 
     /**
      * Calculate duration for a lockout.
      */
-    protected function calculateDuration( ?Authenticatable $user): int
+    protected function calculateDuration( ?Authenticatable $user ): int
     {
-        if ( ! $user) {
+        if ( ! $user ) {
             return config( 'artisanpack.security-auth.account_lockout.lockout_duration.initial_minutes', 15);
         }
 

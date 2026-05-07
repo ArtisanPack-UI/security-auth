@@ -8,6 +8,7 @@ use ArtisanPackUI\SecurityAuth\Contracts\BreachCheckerInterface;
 use ArtisanPackUI\SecurityAuth\Contracts\PasswordSecurityServiceInterface;
 use ArtisanPackUI\SecurityAuth\Models\PasswordHistory;
 use ArtisanPackUI\SecurityAuth\Rules\PasswordComplexity;
+use DateTimeInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Hash;
 
@@ -149,9 +150,10 @@ class PasswordSecurityService implements PasswordSecurityServiceInterface
             return $user->passwordHasExpired();
         }
 
-        // Fallback: check directly if user has the column
-        if ( isset( $user->password_expires_at ) && null !== $user->password_expires_at ) {
-            return $user->password_expires_at->isPast();
+        // Fallback: check directly if user has the column. Guard against
+        // string timestamps from models without a `datetime` cast.
+        if ( isset( $user->password_expires_at ) && $user->password_expires_at instanceof DateTimeInterface ) {
+            return $user->password_expires_at->getTimestamp() < time();
         }
 
         return false;
@@ -166,7 +168,7 @@ class PasswordSecurityService implements PasswordSecurityServiceInterface
             return $user->daysUntilPasswordExpires();
         }
 
-        if ( isset( $user->password_expires_at ) && null !== $user->password_expires_at ) {
+        if ( isset( $user->password_expires_at ) && $user->password_expires_at instanceof DateTimeInterface ) {
             $days = (int) now()->diffInDays( $user->password_expires_at, false );
 
             return max( 0, $days );

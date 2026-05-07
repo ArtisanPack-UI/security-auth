@@ -131,8 +131,21 @@ class ManageAccountLockout extends Command
         /** @var AccountLockoutManager $lockoutManager */
         $lockoutManager = App::make( AccountLockoutManager::class );
 
-        $reason   = $this->option( 'reason' ) ?? 'Locked via console command';
-        $duration = $this->option( 'permanent' ) ? null : (int) $this->option( 'duration' );
+        $reason    = $this->option( 'reason' ) ?? 'Locked via console command';
+        $permanent = (bool) $this->option( 'permanent' );
+
+        if ( $permanent ) {
+            $duration = null;
+        } else {
+            $duration = (int) $this->option( 'duration' );
+            if ( $duration <= 0 ) {
+                $this->error( '--duration must be a positive integer (or pass --permanent for an indefinite lockout).' );
+
+                return self::FAILURE;
+            }
+        }
+
+        $durationText = $permanent ? 'permanently' : "{$duration} minutes";
 
         if ( $userId = $this->option( 'user' ) ) {
             $user = $this->findUser( $userId );
@@ -141,7 +154,6 @@ class ManageAccountLockout extends Command
             }
 
             $lockoutManager->lockUser( $user, $duration, $reason );
-            $durationText = $duration ? "{$duration} minutes" : 'permanently';
             $this->info( "Locked account for user: {$user->email} ({$durationText})" );
 
             return self::SUCCESS;
@@ -149,7 +161,6 @@ class ManageAccountLockout extends Command
 
         if ( $ip = $this->option( 'ip' ) ) {
             $lockoutManager->lockIp( $ip, $duration, $reason );
-            $durationText = $duration ? "{$duration} minutes" : 'permanently';
             $this->info( "Locked IP address: {$ip} ({$durationText})" );
 
             return self::SUCCESS;
@@ -176,10 +187,10 @@ class ManageAccountLockout extends Command
         return $user;
     }
 
-    protected function invalidAction( string $action): int
+    protected function invalidAction( string $action ): int
     {
-        $this->error( "Invalid action: {$action}");
-        $this->line( 'Valid actions: list, unlock, lock');
+        $this->error( "Invalid action: {$action}" );
+        $this->line( 'Valid actions: list, unlock, lock' );
 
         return self::FAILURE;
     }

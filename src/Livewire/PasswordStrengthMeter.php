@@ -68,7 +68,8 @@ class PasswordStrengthMeter extends Component
      */
     public function updatedPassword(): void
     {
-        if ( empty( $this->password ) ) {
+        // Use a strict empty-string check so values like "0" still get scored.
+        if ( '' === $this->password ) {
             $this->resetMetrics();
 
             return;
@@ -138,7 +139,7 @@ class PasswordStrengthMeter extends Component
      */
     public function render()
     {
-        return view( 'security::livewire.password-strength-meter' );
+        return view( 'security-auth::livewire.password-strength-meter' );
     }
 
     /**

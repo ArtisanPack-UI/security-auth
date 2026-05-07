@@ -49,7 +49,7 @@ class EnforcePasswordPolicy
 
         $password = $request->input( 'password' );
 
-        if ( null === $password ) {
+        if ( ! is_string( $password ) ) {
             return $next( $request );
         }
 
@@ -87,6 +87,6 @@ class EnforcePasswordPolicy
             'user_id' => $request->user()?->id,
             'route'   => $request->route()?->getName(),
             'errors'  => $errors,
-        ]);
+        ] );
     }
 }

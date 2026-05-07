@@ -59,6 +59,8 @@ class SecurityAuthServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom( __DIR__ . '/../database/migrations/password' );
         $this->loadMigrationsFrom( __DIR__ . '/../database/migrations/authentication' );
 
+        $this->loadViewsFrom( __DIR__ . '/../resources/views', 'security-auth' );
+
         $this->registerMiddleware();
         $this->registerCommands();
         $this->registerLivewireComponents();

@@ -74,7 +74,7 @@ class TwoFactorCodeMailable extends Mailable
 	public function content(): Content
 	{
 		return new Content(
-			markdown: 'artisanpack-ui-security::emails.two-factor-code',
+			markdown: 'security-auth::emails.two-factor-code',
 			with:     [
 						  'code' => $this->code,
 					  ],

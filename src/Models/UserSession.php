@@ -134,7 +134,7 @@ class UserSession extends Model
             return true;
         }
 
-        return $this->last_activity_at->addMinutes( $idleMinutes )->isPast();
+        return $this->last_activity_at->copy()->addMinutes( $idleMinutes )->isPast();
     }
 
     /**

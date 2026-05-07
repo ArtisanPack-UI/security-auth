@@ -45,7 +45,7 @@ class StepUpAuthentication
 
         if ( ! $lastStepUp || now()->diffInMinutes( $lastStepUp ) > $this->stepUpTimeout ) {
             // Require step-up authentication
-            session( ['step_up_intended_url' => $request->url()] );
+            session( ['step_up_intended_url' => $request->fullUrl()] );
 
             if ( $request->expectsJson() ) {
                 return response()->json( [
@@ -123,7 +123,7 @@ class StepUpAuthentication
 
         // If a specific method is required, filter
         if ( $requiredMethod ) {
-            $methods = in_array( $requiredMethod, $methods) ? [$requiredMethod] : [];
+            $methods = in_array( $requiredMethod, $methods ) ? [$requiredMethod] : [];
         }
 
         return $methods;

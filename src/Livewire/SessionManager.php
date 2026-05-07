@@ -7,6 +7,7 @@ namespace ArtisanPackUI\SecurityAuth\Livewire;
 use ArtisanPackUI\SecurityAuth\Authentication\Session\AdvancedSessionManager;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class SessionManager extends Component
@@ -92,7 +93,11 @@ class SessionManager extends Component
             session()->flash( 'success', 'Session has been terminated.' );
             $this->loadSessions();
         } catch ( Exception $e ) {
-            session()->flash( 'error', 'Failed to terminate session: ' . $e->getMessage() );
+            Log::error( 'SessionManager::terminateSession failed', [
+                'session_id' => $sessionId,
+                'exception'  => $e,
+            ] );
+            session()->flash( 'error', 'Failed to terminate session. Please try again.' );
         }
 
         $this->terminatingSessionId = null;
@@ -115,13 +120,16 @@ class SessionManager extends Component
             session()->flash( 'success', "{$count} session(s) have been terminated." );
             $this->loadSessions();
         } catch ( Exception $e ) {
-            session()->flash( 'error', 'Failed to terminate sessions: ' . $e->getMessage() );
+            Log::error( 'SessionManager::terminateAllOtherSessions failed', [
+                'exception' => $e,
+            ] );
+            session()->flash( 'error', 'Failed to terminate sessions. Please try again.' );
         }
     }
 
     public function render()
     {
-        return view( 'security::livewire.session-manager' );
+        return view( 'security-auth::livewire.session-manager' );
     }
 
     protected function getDeviceIcon( string $deviceType ): string
@@ -140,8 +148,8 @@ class SessionManager extends Component
             $session->city,
             $session->region,
             $session->country,
-        ]);
+        ] );
 
-        return implode( ', ', $parts) ?: 'Unknown location';
+        return implode( ', ', $parts ) ?: 'Unknown location';
     }
 }
