@@ -314,14 +314,18 @@ class AdvancedSessionManager implements SessionSecurityInterface
      */
     protected function validateIpBinding( ?string $sessionIp, ?string $requestIp, string $strictness ): bool
     {
-        if ( ! $sessionIp || ! $requestIp ) {
+        $strictness = strtolower( $strictness );
+
+        // 'none' means the binding is intentionally off — only branch where
+        // missing metadata is acceptable.
+        if ( 'none' === $strictness ) {
             return true;
         }
 
-        $strictness = strtolower( $strictness );
-
-        if ( 'none' === $strictness ) {
-            return true;
+        // Otherwise fail closed when either side is missing rather than
+        // silently waving the request through.
+        if ( ! $sessionIp || ! $requestIp ) {
+            return false;
         }
 
         if ( 'exact' === $strictness ) {
@@ -354,14 +358,14 @@ class AdvancedSessionManager implements SessionSecurityInterface
      */
     protected function validateUserAgentBinding( ?string $sessionUa, ?string $requestUa, string $strictness ): bool
     {
-        if ( ! $sessionUa || ! $requestUa ) {
-            return true;
-        }
-
         $strictness = strtolower( $strictness );
 
         if ( 'none' === $strictness ) {
             return true;
+        }
+
+        if ( ! $sessionUa || ! $requestUa ) {
+            return false;
         }
 
         if ( 'exact' === $strictness ) {
@@ -372,6 +376,12 @@ class AdvancedSessionManager implements SessionSecurityInterface
         if ( 'browser_only' === $strictness ) {
             $sessionBrowser = $this->extractBrowser( $sessionUa );
             $requestBrowser = $this->extractBrowser( $requestUa );
+
+            // null === null would otherwise pass two unrecognised UAs;
+            // treat unparseable as a mismatch.
+            if ( null === $sessionBrowser || null === $requestBrowser ) {
+                return false;
+            }
 
             return $sessionBrowser === $requestBrowser;
         }
