@@ -1,70 +1,148 @@
 <?php
 
-/**
- * Package service provider.
- *
- * Bootstraps the Package by registering services and bindings.
- *
- * @package    ArtisanPack_UI
- * @subpackage SecurityAuth
- *
- * @author     Jacob Martella <me@jacobmartella.com>
- *
- * @since      1.0.0
- */
-
 declare( strict_types=1 );
 
 namespace ArtisanPackUI\SecurityAuth;
 
+use ArtisanPackUI\SecurityAuth\Authentication\Contracts\AccountLockoutInterface;
+use ArtisanPackUI\SecurityAuth\Authentication\Contracts\SessionSecurityInterface;
+use ArtisanPackUI\SecurityAuth\Authentication\Lockout\AccountLockoutManager;
+use ArtisanPackUI\SecurityAuth\Authentication\Session\AdvancedSessionManager;
+use ArtisanPackUI\SecurityAuth\Console\Commands\ManageAccountLockout;
+use ArtisanPackUI\SecurityAuth\Contracts\BreachCheckerInterface;
+use ArtisanPackUI\SecurityAuth\Contracts\PasswordSecurityServiceInterface;
+use ArtisanPackUI\SecurityAuth\Http\Middleware\CheckAccountLockout;
+use ArtisanPackUI\SecurityAuth\Http\Middleware\EnforcePasswordPolicy;
+use ArtisanPackUI\SecurityAuth\Http\Middleware\StepUpAuthentication;
+use ArtisanPackUI\SecurityAuth\Http\Middleware\TwoFactorMiddleware;
+use ArtisanPackUI\SecurityAuth\Services\HaveIBeenPwnedService;
+use ArtisanPackUI\SecurityAuth\Services\PasswordSecurityService;
+use ArtisanPackUI\SecurityAuth\TwoFactor\TwoFactorManager;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Service provider for the Package.
+ * Security Auth service provider.
  *
- * Bootstraps the Package by registering services and bindings.
- * Extend this class with your package's configuration, migrations,
- * routes, views, and other service registrations.
+ * Registers two-factor authentication, password security, account lockout,
+ * and advanced session management services for Laravel applications.
  *
- * @package    ArtisanPack_UI
- * @subpackage SecurityAuth
- *
- * @since      1.0.0
+ * @since 1.0.0
  */
 class SecurityAuthServiceProvider extends ServiceProvider
 {
-    /**
-     * Registers any application services.
-     *
-     * Binds the Package class as a singleton in the container.
-     * Add additional service registrations here.
-     *
-     * @since 1.0.0
-     *
-     * @return void
-     */
     public function register(): void
     {
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/artisanpack/security-auth.php',
+            'artisanpack.security-auth',
+        );
+
         $this->app->singleton( 'security-auth', function ( $app ) {
             return new SecurityAuth();
         } );
+
+        $this->registerTwoFactor();
+        $this->registerPasswordSecurity();
+        $this->registerAccountLockout();
+        $this->registerAdvancedSessions();
     }
 
-    /**
-     * Bootstraps any application services.
-     *
-     * Add package bootstrapping here such as:
-     * - Configuration publishing: $this->publishes([...])
-     * - Migration loading: $this->loadMigrationsFrom(...)
-     * - View loading: $this->loadViewsFrom(...)
-     * - Route loading: $this->loadRoutesFrom(...)
-     *
-     * @since 1.0.0
-     *
-     * @return void
-     */
     public function boot(): void
     {
-        // Add your package bootstrapping here
+        $this->publishes(
+            [
+                __DIR__ . '/../config/artisanpack/security-auth.php' => config_path( 'artisanpack/security-auth.php' ),
+            ],
+            'security-auth-config',
+        );
+
+        $this->loadMigrationsFrom( __DIR__ . '/../database/migrations' );
+        $this->loadMigrationsFrom( __DIR__ . '/../database/migrations/password' );
+        $this->loadMigrationsFrom( __DIR__ . '/../database/migrations/authentication' );
+
+        $this->loadViewsFrom( __DIR__ . '/../resources/views', 'security-auth' );
+
+        $this->registerMiddleware();
+        $this->registerCommands();
+        $this->registerLivewireComponents();
+    }
+
+    protected function registerTwoFactor(): void
+    {
+        $this->app->singleton( TwoFactorManager::class, function () {
+            return new TwoFactorManager();
+        } );
+
+        $this->app->alias( TwoFactorManager::class, 'security-auth.two-factor' );
+    }
+
+    protected function registerPasswordSecurity(): void
+    {
+        $this->app->singleton( HaveIBeenPwnedService::class, function () {
+            return new HaveIBeenPwnedService();
+        } );
+
+        // Bind the contract so NotCompromised + PasswordPolicy can resolve
+        // the same instance that PasswordSecurityService uses.
+        $this->app->bind( BreachCheckerInterface::class, HaveIBeenPwnedService::class );
+
+        $this->app->singleton( PasswordSecurityServiceInterface::class, function ( $app ) {
+            return new PasswordSecurityService(
+                $app->make( BreachCheckerInterface::class ),
+            );
+        } );
+    }
+
+    protected function registerAccountLockout(): void
+    {
+        $this->app->singleton( AccountLockoutManager::class, function () {
+            return new AccountLockoutManager();
+        } );
+
+        $this->app->bind( AccountLockoutInterface::class, AccountLockoutManager::class );
+    }
+
+    protected function registerAdvancedSessions(): void
+    {
+        $this->app->singleton( AdvancedSessionManager::class, function () {
+            return new AdvancedSessionManager();
+        } );
+
+        $this->app->bind( SessionSecurityInterface::class, AdvancedSessionManager::class );
+    }
+
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app['router'];
+
+        $router->aliasMiddleware( 'two-factor', TwoFactorMiddleware::class );
+        $router->aliasMiddleware( 'password.policy', EnforcePasswordPolicy::class );
+        $router->aliasMiddleware( 'check.lockout', CheckAccountLockout::class );
+        $router->aliasMiddleware( 'step-up', StepUpAuthentication::class );
+    }
+
+    protected function registerCommands(): void
+    {
+        if ( ! $this->app->runningInConsole() ) {
+            return;
+        }
+
+        $this->commands(
+            [
+                ManageAccountLockout::class,
+            ],
+        );
+    }
+
+    protected function registerLivewireComponents(): void
+    {
+        if ( ! class_exists( \Livewire\Livewire::class ) || ! $this->app->bound( 'livewire' ) ) {
+            return;
+        }
+
+        \Livewire\Livewire::component( 'password-strength-meter', Livewire\PasswordStrengthMeter::class );
+        \Livewire\Livewire::component( 'account-lockout-status', Livewire\AccountLockoutStatus::class );
+        \Livewire\Livewire::component( 'session-manager', Livewire\SessionManager::class );
+        \Livewire\Livewire::component( 'step-up-authentication-modal', Livewire\StepUpAuthenticationModal::class );
     }
 }

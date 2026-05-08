@@ -4,7 +4,7 @@ Authentication security for Laravel: two-factor authentication (email/TOTP), pas
 
 This package is part of the **ArtisanPack UI Security 2.0** split — the auth-focused features previously bundled inside `artisanpack-ui/security` (1.x) live here in 2.0+.
 
-> **Status:** scaffold. Content is being extracted from `artisanpack-ui/security` 1.x in follow-up PRs. See the package roadmap on the issue tracker.
+> **Status:** initial extraction. Source files are migrated from `artisanpack-ui/security` 1.x. Comprehensive test coverage migration is a follow-up — see open issues.
 
 ## Installation
 
