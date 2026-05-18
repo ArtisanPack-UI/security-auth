@@ -226,8 +226,8 @@ class PasswordComplexityTest extends TestCase
     {
         $rule = new PasswordComplexity();
 
-        $this->assertValidates( $rule, 'MyStr0ng!P@ssword');
-        $this->assertValidates( $rule, 'C0mplex#Pass917');
-        $this->assertValidates( $rule, 'Secur3&Unique99');
+        $this->assertValidates( $rule, 'MyStr0ng!P@ssword' );
+        $this->assertValidates( $rule, 'C0mplex#Pass917' );
+        $this->assertValidates( $rule, 'Secur3&Unique99' );
     }
 }
