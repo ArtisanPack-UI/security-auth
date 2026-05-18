@@ -71,36 +71,35 @@
                             </div>
                         </div>
 
-                        @if ( ! $isCurrent )
-                            <div>
-                                @if ( $isTerminating )
-                                    <div class="flex gap-2">
-                                        <button
-                                            type="button"
-                                            wire:click="terminateSession('{{ $session['id'] }}')"
-                                            class="text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-medium"
-                                        >
-                                            {{ __( 'Confirm sign out' ) }}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            wire:click="cancelTerminate"
-                                            class="text-xs px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded font-medium"
-                                        >
-                                            {{ __( 'Cancel' ) }}
-                                        </button>
-                                    </div>
-                                @else
+                        <div>
+                            @if ( $isTerminating )
+                                <div class="flex gap-2">
                                     <button
                                         type="button"
-                                        wire:click="confirmTerminate('{{ $session['id'] }}')"
-                                        class="text-sm text-red-600 hover:text-red-800 font-medium"
+                                        wire:click="terminateSession('{{ $session['id'] }}')"
+                                        class="text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-medium"
                                     >
-                                        {{ __( 'Sign out' ) }}
+                                        {{ __( 'Confirm sign out' ) }}
                                     </button>
-                                @endif
-                            </div>
-                        @endif
+                                    <button
+                                        type="button"
+                                        wire:click="cancelTerminate"
+                                        class="text-xs px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded font-medium"
+                                    >
+                                        {{ __( 'Cancel' ) }}
+                                    </button>
+                                </div>
+                            @else
+                                <button
+                                    type="button"
+                                    wire:click="confirmTerminate('{{ $session['id'] }}')"
+                                    class="text-sm text-red-600 hover:text-red-800 font-medium"
+                                    aria-label="{{ $isCurrent ? __( 'Sign out of this current session' ) : __( 'Sign out of this session' ) }}"
+                                >
+                                    {{ $isCurrent ? __( 'Sign out this session' ) : __( 'Sign out' ) }}
+                                </button>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @endforeach

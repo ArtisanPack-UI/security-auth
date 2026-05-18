@@ -22,7 +22,7 @@ class User extends Authenticatable
 }
 ```
 
-This adds three columns (via migration) and three methods:
+This adds three columns (via migration) and four methods:
 - `getTwoFactorEnabledAttribute(): bool`
 - `hasTwoFactorEnabled(): bool`
 - `generateTwoFactorSecret(): void`

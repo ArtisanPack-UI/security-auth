@@ -65,7 +65,7 @@ Listens on the `open-step-up` event. On successful verification, dispatches `ste
 
 The shipped Blade views are plain HTML + Tailwind. To customize:
 
-1. Publish them (after `php artisan vendor:publish --tag=security-auth-views` lands as a publishable group):
+1. Publish them with the `security-auth-views` tag:
    ```bash
    php artisan vendor:publish --tag=security-auth-views
    ```

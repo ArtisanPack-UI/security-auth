@@ -22,7 +22,7 @@ Three common causes:
 
 ## `pragmarx/google2fa-laravel` missing
 
-If you see `Class 'PragmaRX\Google2FA\...' not found`, the dependency didn't install. Run `composer require pragmarx/google2fa-laravel`. The package's composer.json requires it but a `composer install` without dev deps in certain scenarios can skip it.
+If you see `Class 'PragmaRX\Google2FA\...' not found`, the dependency didn't install correctly. Run `composer require pragmarx/google2fa-laravel`, or re-run `composer install` after verifying your lockfile is current. Note: `composer install --no-dev` only skips `require-dev` packages; `pragmarx/google2fa-laravel` lives in `require`, so it should always be installed. If it's missing, suspect a stale lockfile, an interrupted install, or a platform constraint mismatch.
 
 ## Account stays locked after duration expires
 

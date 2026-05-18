@@ -33,7 +33,7 @@ $result = $sessionManager->validateSessionBindings( $session, $request );
 if ( ! $result['valid'] ) {
     // IP or UA changed — terminate the session
     auth()->logout();
-    redirect()->route('login')->with('error', 'Session invalidated for security.');
+    return redirect()->route('login')->with('error', 'Session invalidated for security.');
 }
 ```
 

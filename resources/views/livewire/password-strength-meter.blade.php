@@ -9,7 +9,7 @@
     component's `wire:model="password"` — see usage examples in the docs.
 --}}
 <div class="space-y-2" role="status" aria-live="polite">
-    @if ( $password !== '' )
+    @if ( filled( $password ) )
         {{-- Visual strength bar --}}
         <div class="w-full bg-gray-200 rounded-full h-2">
             <div
