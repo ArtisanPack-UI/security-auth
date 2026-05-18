@@ -76,7 +76,7 @@
                                 <div class="flex gap-2">
                                     <button
                                         type="button"
-                                        wire:click="terminateSession('{{ $session['id'] }}')"
+                                        wire:click="terminateSession({{ json_encode($session['id']) }})"
                                         class="text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-medium"
                                     >
                                         {{ __( 'Confirm sign out' ) }}
@@ -92,7 +92,7 @@
                             @else
                                 <button
                                     type="button"
-                                    wire:click="confirmTerminate('{{ $session['id'] }}')"
+                                    wire:click="confirmTerminate({{ json_encode($session['id']) }})"
                                     class="text-sm text-red-600 hover:text-red-800 font-medium"
                                     aria-label="{{ $isCurrent ? __( 'Sign out of this current session' ) : __( 'Sign out of this session' ) }}"
                                 >
