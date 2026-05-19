@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * PasswordPolicy validation rule.
+ *
+ * @package    ArtisanPack_UI
+ * @subpackage SecurityAuth
+ *
+ * @author     Jacob Martella <support@artisanpackui.dev>
+ *
+ * @since      1.0.0
+ */
+
 declare( strict_types=1 );
 
 namespace ArtisanPackUI\SecurityAuth\Rules;

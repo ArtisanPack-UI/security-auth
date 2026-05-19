@@ -2,8 +2,8 @@
   "name": "artisanpack-ui/security-auth",
   "description": "Authentication security for Laravel — two-factor authentication (email/TOTP), password complexity and breach checking, account lockout, and session management.",
   "type": "library",
-  "license": "GPL-3.0-or-later",
-  "version": "0.1.0",
+  "license": "MIT",
+  "version": "1.0.0",
   "keywords": [
     "laravel",
     "security",
@@ -30,7 +30,7 @@
   "authors": [
     {
       "name": "Jacob Martella",
-      "email": "me@jacobmartella.com"
+      "email": "support@artisanpackui.dev"
     }
   ],
   "require": {

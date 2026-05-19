@@ -92,8 +92,8 @@ class NotCompromisedTest extends TestCase
     {
         $mock = $this->createMock( BreachCheckerInterface::class );
         $mock->method( 'check' )->willReturn( $occurrences );
-        $mock->method( 'isCompromised' )->willReturn( $occurrences > 0);
+        $mock->method( 'isCompromised' )->willReturn( $occurrences > 0 );
 
-        $this->app->instance( BreachCheckerInterface::class, $mock);
+        $this->app->instance( BreachCheckerInterface::class, $mock );
     }
 }
