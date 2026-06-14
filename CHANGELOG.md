@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Widened `illuminate/support` constraint to accept Laravel 13 (`^10.0|^11.0|^12.0|^13.0`).
+- Widened `pragmarx/google2fa-laravel` constraint to accept v3 (`^2.3|^3.0`), which is the Laravel-13-compatible line. The package's only consumer (`TwoFactorAuthenticatable::generateTwoFactorSecret`) calls `PragmaRX\Google2FA\Google2FA::generateSecretKey()` on the underlying `pragmarx/google2fa` core library, whose API is unchanged across the v2→v3 wrapper bump.
+
 ## [1.0.0] - 2026-05-18
 
 ### Added
