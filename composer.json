@@ -3,7 +3,7 @@
   "description": "Authentication security for Laravel — two-factor authentication (email/TOTP), password complexity and breach checking, account lockout, and session management.",
   "type": "library",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "laravel",
     "security",
