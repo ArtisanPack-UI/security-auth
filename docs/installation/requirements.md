@@ -10,12 +10,12 @@ title: Requirements
 
 ## Laravel
 
-- Laravel 10 / 11 / 12
+- Laravel 10 / 11 / 12 / 13
 
 ## Composer dependencies (pulled in automatically)
 
 - `artisanpack-ui/core: ^1.0`
-- `pragmarx/google2fa-laravel: ^2.3` — backs the TOTP 2FA provider
+- `pragmarx/google2fa-laravel: ^2.3 | ^3.0` — backs the TOTP 2FA provider (v3.x is the Laravel-13-compatible line)
 
 ## Optional dependencies
 

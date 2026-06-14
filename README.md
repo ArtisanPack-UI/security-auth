@@ -111,8 +111,8 @@ The four shipped Blade views render in plain HTML + Tailwind. Publish + override
 ## Requirements
 
 - PHP 8.2+
-- Laravel 10 / 11 / 12
-- `pragmarx/google2fa-laravel: ^2.3` (pulled in automatically) for TOTP 2FA
+- Laravel 10 / 11 / 12 / 13
+- `pragmarx/google2fa-laravel: ^2.3 | ^3.0` (pulled in automatically) for TOTP 2FA
 
 ## Sibling packages
 
